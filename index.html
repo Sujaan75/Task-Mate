@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TaskMate: plan your day</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+    /* Apply the saved (or system) theme before first paint to avoid a flash */
+    (function () {
+      var t = null;
+      try { t = localStorage.getItem('taskmate.theme'); } catch (e) {}
+      if (!t) t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', t);
+    })();
+  </script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to tasks</a>
+  <div class="scrim" id="scrim"></div>
+
+  <div class="app">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar" aria-label="Sidebar">
+      <div class="brand">
+        <span class="logo"><i data-lucide="check"></i></span>
+        <span>TaskMate</span>
+      </div>
+      <nav aria-label="Task views">
+        <ul class="nav">
+          <li><button class="nav-item" data-view="all"><i data-lucide="layout-list"></i><span>All tasks</span><b class="count" data-count="all">0</b></button></li>
+          <li><button class="nav-item" data-view="today"><i data-lucide="sun"></i><span>Today</span><b class="count" data-count="today">0</b></button></li>
+          <li><button class="nav-item" data-view="upcoming"><i data-lucide="calendar"></i><span>Upcoming</span><b class="count" data-count="upcoming">0</b></button></li>
+          <li><button class="nav-item" data-view="pending"><i data-lucide="clock"></i><span>Pending</span><b class="count" data-count="pending">0</b></button></li>
+          <li><button class="nav-item" data-view="completed"><i data-lucide="check"></i><span>Completed</span><b class="count" data-count="completed">0</b></button></li>
+        </ul>
+      </nav>
+      <p class="side-note">Your tasks are saved in this browser, so they will be here when you come back.</p>
+    </aside>
+
+    <div class="main">
+      <!-- Header -->
+      <header class="topbar">
+        <button class="icon-btn menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="sidebar"><i data-lucide="menu"></i></button>
+        <div class="top-text">
+          <strong id="greeting">Hello</strong>
+          <span id="today"></span>
+        </div>
+        <button class="icon-btn" id="themeBtn" aria-label="Switch to dark mode" aria-pressed="false"><i data-lucide="moon" class="i-moon"></i><i data-lucide="sun" class="i-sun"></i></button>
+        <div class="avatar" role="img" aria-label="Your profile">TM</div>
+      </header>
+
+      <main id="main" class="content">
+        <div class="primary">
+          <section class="welcome">
+            <h1>Your day at a glance</h1>
+            <p id="subtitle"></p>
+          </section>
+
+          <!-- Statistics -->
+          <section class="stats" aria-label="Task statistics">
+            <article class="stat"><span class="stat-icon"><i data-lucide="list-checks"></i></span><div><strong id="sTotal">0</strong><span>Total tasks</span></div></article>
+            <article class="stat"><span class="stat-icon ok"><i data-lucide="check"></i></span><div><strong id="sDone">0</strong><span>Completed</span></div></article>
+            <article class="stat"><span class="stat-icon warn"><i data-lucide="clock"></i></span><div><strong id="sPending">0</strong><span>Pending</span></div></article>
+            <article class="stat"><span class="stat-icon"><i data-lucide="trending-up"></i></span><div><strong id="sRate">0%</strong><span>Completion rate</span></div></article>
+          </section>
+
+          <!-- Task management -->
+          <section class="panel" aria-labelledby="viewTitle">
+            <div class="panel-head">
+              <div>
+                <h2 id="viewTitle">All tasks</h2>
+                <p id="viewCount" class="muted"></p>
+              </div>
+              <button class="btn primary" id="addBtn"><i data-lucide="plus"></i>New task</button>
+            </div>
+
+            <div class="toolbar">
+              <div class="search">
+                <i data-lucide="search"></i>
+                <input type="search" id="search" placeholder="Search by title" aria-label="Search tasks by title" autocomplete="off">
+              </div>
+              <select id="fPriority" aria-label="Filter by priority">
+                <option value="all">All priorities</option>
+                <option value="high">High</option>
+                <option value="medium">Medium</option>
+                <option value="low">Low</option>
+              </select>
+              <select id="fCategory" aria-label="Filter by category"></select>
+              <select id="fSort" aria-label="Sort tasks">
+                <option value="due-asc">Due date: soonest</option>
+                <option value="due-desc">Due date: latest</option>
+                <option value="priority">Priority: high first</option>
+                <option value="newest">Recently added</option>
+              </select>
+            </div>
+
+            <ul class="list" id="list"></ul>
+
+            <div class="empty" id="empty" hidden>
+              <i data-lucide="inbox"></i>
+              <h3 id="emptyTitle"></h3>
+              <p id="emptyText"></p>
+              <button class="btn" id="emptyBtn"></button>
+            </div>
+          </section>
+        </div>
+
+        <!-- Right panel -->
+        <aside class="side" aria-label="Productivity overview">
+          <section class="panel">
+            <h2>Productivity</h2>
+            <div class="ring-wrap">
+              <div class="ring">
+                <svg viewBox="0 0 100 100" aria-hidden="true"><circle class="ring-bg" cx="50" cy="50" r="42"/><circle class="ring-fg" id="ringFg" cx="50" cy="50" r="42"/></svg>
+                <div class="ring-text"><strong id="ringPct">0%</strong><span>done</span></div>
+              </div>
+              <p id="ringNote" class="muted"></p>
+            </div>
+          </section>
+          <section class="panel">
+            <h2>Coming up</h2>
+            <ul class="soon" id="soon"></ul>
+          </section>
+        </aside>
+      </main>
+    </div>
+  </div>
+
+  <!-- Add / edit dialog -->
+  <dialog id="taskDialog" aria-labelledby="dlgTitle">
+    <form id="taskForm" novalidate>
+      <div class="dlg-head">
+        <h2 id="dlgTitle">New task</h2>
+        <button type="button" class="icon-btn" data-close aria-label="Close"><i data-lucide="x"></i></button>
+      </div>
+      <div class="field">
+        <label for="fTitle">Title</label>
+        <input id="fTitle" maxlength="80" autocomplete="off" placeholder="e.g. Prepare the quarterly report" aria-describedby="titleErr">
+        <p class="err" id="titleErr" role="alert"></p>
+      </div>
+      <div class="field">
+        <label for="fDesc">Description <span class="muted">(optional)</span></label>
+        <textarea id="fDesc" rows="3" maxlength="300" placeholder="Add any details you need"></textarea>
+      </div>
+      <div class="row3">
+        <div class="field"><label for="fPri">Priority</label>
+          <select id="fPri"><option value="high">High</option><option value="medium" selected>Medium</option><option value="low">Low</option></select></div>
+        <div class="field"><label for="fCat">Category</label><select id="fCat"></select></div>
+        <div class="field"><label for="fDue">Due date</label><input type="date" id="fDue"></div>
+      </div>
+      <div class="dlg-foot">
+        <button type="button" class="btn" data-close>Cancel</button>
+        <button type="submit" class="btn primary" id="saveBtn">Add task</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Delete confirmation -->
+  <dialog id="confirmDialog" class="small" aria-labelledby="cTitle">
+    <div class="dlg-head"><h2 id="cTitle">Delete this task?</h2></div>
+    <p id="cText" class="muted"></p>
+    <div class="dlg-foot">
+      <button type="button" class="btn" data-close>Keep task</button>
+      <button type="button" class="btn danger" id="confirmBtn">Delete task</button>
+    </div>
+  </dialog>
+
+  <div class="toasts" id="toasts" aria-live="polite"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
